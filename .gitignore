@@ -1,0 +1,5 @@
+.idea/
+
+# Arquivos de Python
+__pycache__/
+*.pyc

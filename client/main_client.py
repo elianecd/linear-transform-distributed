@@ -1,9 +1,9 @@
 import socket
 import pickle
 import numpy as np
+import time
 from client.gpu_processor import process_points  # ou gpu_processor_opencl se estiver usando OpenCL
 from server.config import HOST, PORT
-
 
 # Função para receber todos os dados do servidor
 def recv_all(sock):
@@ -21,12 +21,14 @@ def recv_all(sock):
         return None
     return data
 
-
 # Cria socket TCP e conecta ao servidor
 s = socket.socket()
 print(f"\nConectando ao servidor em {HOST}:{PORT}...\n")
 s.connect((HOST, PORT))
 print("Conectado com sucesso.\n")
+
+# Começa a contagem total de tempo do cliente
+global_start = time.time()
 
 # Recebe a matriz de transformação (T)
 msg = recv_all(s)
@@ -63,8 +65,10 @@ while True:
 
     # Processamento com GPU
     print(f"Processando bloco {block_id} com GPU...\n")
+    start_time = time.time()
     result = process_points(np.array(points), T)
-    print(f"Bloco {block_id} processado.\n")
+    end_time = time.time()
+    print(f"Bloco {block_id} processado em {end_time - start_time:.3f} segundos.\n")
 
     # Envia os dados processados de volta ao servidor
     s.sendall(pickle.dumps({
@@ -74,3 +78,10 @@ while True:
     }))
 
     print(f"Bloco {block_id} enviado ao servidor.\n" + "-" * 60 + "\n")
+
+# Tempo total
+print("Todos os blocos foram processados.\n")
+global_end = time.time()
+print(f"Tempo total do cliente: {global_end - global_start:.2f} segundos\n")
+
+s.close()
